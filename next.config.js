@@ -5,9 +5,6 @@ const withNextra = nextra({
   themeConfig: './theme.config.tsx',
   defaultShowCopyCode: true,
   latex: true,
-  search: {
-    codeblocks: false,
-  },
 });
 
 export default withNextra({
