@@ -573,6 +573,7 @@ Here are all available variable-related methods:
 | bru.deleteAllVars()               | Deletes all runtime variables.                            |
 | bru.getAllVars()                   | Returns a shallow copy of all runtime variables.          |
 | bru.getOauth2CredentialVar(key)   | Retrieves an OAuth2 credential variable value.            |
+| bru.resetOauth2Credential(credentialId) | Resets OAuth2 credentials and triggers a fresh OAuth2 cycle. |
 
 #### Process Environment Variables
 
@@ -684,6 +685,31 @@ Runtime variables are temporary variables that exist only during the execution o
 - **`getOauth2CredentialVar(key)`** - Retrieve an OAuth2 credential variable value. This is useful for accessing OAuth2 tokens and credentials.
   ```javascript
   const accessToken = bru.getOauth2CredentialVar("access_token");
+  ```
+
+- **`resetOauth2Credential(credentialId)`** - Resets the OAuth2 credentials associated with the given credential ID and triggers a new OAuth2 authentication cycle to obtain fresh credentials.
+
+  **Parameters:**
+  - `credentialId` (string): The credential ID configured in the OAuth2 authentication settings of the request.
+
+  <Callout type="info">
+    Multiple requests can share the same `credentialId`. Calling `resetOauth2Credential()` with a credential ID will reset the credentials for **all** requests that use that ID.
+  </Callout>
+
+  **Example:**
+  ```javascript
+  // Reset credentials when a 401 Unauthorized is received
+  if (res.getStatus() === 401) {
+    bru.resetOauth2Credential("my-credential-id");
+    console.log("OAuth2 credentials reset, fresh token will be fetched on next request");
+  }
+  ```
+
+  ```javascript
+  // Force refresh before a critical request
+  bru.resetOauth2Credential("api-service-credential");
+  const token = bru.getOauth2CredentialVar("access_token");
+  req.setHeader("Authorization", `Bearer ${token}`);
   ```
 
 ## Runner
