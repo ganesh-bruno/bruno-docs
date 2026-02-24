@@ -32,6 +32,7 @@ Here is a complete table for all available methods on the `req` object.
 | req.getHeaders()               | Get all request headers.                                             |
 | req.setHeader(name, value)     | Set a request header by name.                                        |
 | req.setHeaders(headers)        | Set multiple request headers.                                        |
+| req.deleteHeader(name)         | Delete a request header by name.                                     |
 | req.getBody(options?)          | Get the current request body/payload (supports raw option).          |
 | req.setBody(body)              | Set the request body/payload.                                        |
 | req.setMaxRedirects(count)     | Set the maximum number of redirects to follow.                       |
@@ -160,6 +161,16 @@ Below is the API documentation for the methods available on `req`
     "content-type": "application/json",
     "transaction-id": "foobar",
   });
+  ```
+
+- **`deleteHeader(name)`** - Delete a request header by name. Removes the specified header from the request.
+  ```javascript
+  req.deleteHeader("x-custom-header");
+
+  // Conditionally remove a header
+  if (bru.getEnvName() === "production") {
+    req.deleteHeader("x-debug-mode");
+  }
   ```
 
 ### Body Methods
@@ -424,15 +435,20 @@ The `bru` object provides methods for managing environments in Bruno. Environmen
 
 Here are all available environment-related methods:
 
-| Method                     | Description                                               |
-| -------------------------- | --------------------------------------------------------- |
-| bru.getEnvName()           | Retrieves the environment name.                           |
-| bru.hasEnvVar(key)         | Checks if the environment variable exists.                |
-| bru.getEnvVar(key)         | Retrieves the value of an environment variable.           |
-| bru.setEnvVar(key, value)  | Sets a new environment variable.                          |
-| bru.deleteEnvVar(key)      | Deletes a specific environment variable.                  |
-| bru.getGlobalEnvVar(key)   | Get the Bruno global environment variable.                |
-| bru.setGlobalEnvVar(key, value) | Set the Bruno global environment variable.           |
+| Method                          | Description                                                             |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| bru.getEnvName()                | Retrieves the environment name.                                         |
+| bru.hasEnvVar(key)              | Checks if the environment variable exists.                              |
+| bru.getEnvVar(key)              | Retrieves the value of an environment variable.                         |
+| bru.setEnvVar(key, value)       | Sets a new environment variable.                                        |
+| bru.deleteEnvVar(key)           | Deletes a specific environment variable.                                |
+| bru.getAllEnvVars()              | Returns a shallow copy of all environment variables.                    |
+| bru.deleteAllEnvVars()          | Deletes all environment variables while preserving the environment name.|
+| bru.getGlobalEnvVar(key)        | Get the Bruno global environment variable.                              |
+| bru.setGlobalEnvVar(key, value) | Set the Bruno global environment variable.                              |
+| bru.deleteGlobalEnvVar(key)     | Deletes a single global environment variable by key.                    |
+| bru.getAllGlobalEnvVars()        | Returns a shallow copy of all global environment variables.             |
+| bru.deleteAllGlobalEnvVars()    | Deletes all global environment variables.                               |
 
 #### Environment Information
 
@@ -485,6 +501,19 @@ Here are all available environment-related methods:
   bru.deleteEnvVar("access_token");
   ```
 
+- **`getAllEnvVars()`** - Returns a shallow copy of all environment variables for the current environment. The internal `__name__` property is excluded from the result.
+  ```javascript
+  const allVars = bru.getAllEnvVars();
+  console.log("All env variables:", allVars);
+  // Output: { baseUrl: "https://api.example.com", apiKey: "abc123", ... }
+  ```
+
+- **`deleteAllEnvVars()`** - Deletes all environment variables while preserving the environment name. Useful for resetting an environment to a clean state.
+  ```javascript
+  bru.deleteAllEnvVars();
+  console.log("All environment variables cleared");
+  ```
+
 #### Global Environment Variables
 
 - **`getGlobalEnvVar(key)`** - Get the Bruno global environment variable.
@@ -497,6 +526,24 @@ Here are all available environment-related methods:
   bru.setGlobalEnvVar("val", "bruno");
   ```
 
+- **`deleteGlobalEnvVar(key)`** - Delete a single global environment variable by key.
+  ```javascript
+  bru.deleteGlobalEnvVar("apiKey");
+  ```
+
+- **`getAllGlobalEnvVars()`** - Returns a shallow copy of all global environment variables.
+  ```javascript
+  const globalVars = bru.getAllGlobalEnvVars();
+  console.log("All global env variables:", globalVars);
+  // Output: { globalToken: "xyz", sharedApiUrl: "https://api.shared.com", ... }
+  ```
+
+- **`deleteAllGlobalEnvVars()`** - Deletes all global environment variables.
+  ```javascript
+  bru.deleteAllGlobalEnvVars();
+  console.log("All global environment variables cleared");
+  ```
+
 ## Variables
 
 Bruno provides a comprehensive variable system that allows you to manage and access different types of variables throughout your scripts. Variables are resolved in a specific order of precedence, with runtime variables taking the highest priority.
@@ -507,19 +554,25 @@ Bruno provides a comprehensive variable system that allows you to manage and acc
 
 Here are all available variable-related methods:
 
-| Method                       | Description                                               |
-| ---------------------------- | --------------------------------------------------------- |
-| bru.getProcessEnv(key)       | Fetches the process environment variable for a given key. |
-| bru.getCollectionVar(key)    | Retrieves the collection-level variable for the key.      |
-| bru.getCollectionName()      | Retrieves the current collection name.                    |
-| bru.getFolderVar(key)        | Fetches a folder-specific variable by key.                |
-| bru.getRequestVar(key)       | Retrieves the value of a request variable.                |
-| bru.hasVar(key)              | Checks if a variable exists.                              |
-| bru.getVar(key)              | Retrieves the value of a variable.                        |
-| bru.setVar(key, value)       | Sets a new variable with a key-value pair.                |
-| bru.deleteVar(key)           | Deletes a specific variable.                              |
-| bru.deleteAllVars()          | Deletes all runtime variables.                            |
-| bru.getOauth2CredentialVar(key) | Retrieves an OAuth2 credential variable value.         |
+| Method                            | Description                                               |
+| --------------------------------- | --------------------------------------------------------- |
+| bru.getProcessEnv(key)            | Fetches the process environment variable for a given key. |
+| bru.getCollectionVar(key)         | Retrieves the collection-level variable for the key.      |
+| bru.setCollectionVar(key, value)  | Sets a collection-level variable.                         |
+| bru.hasCollectionVar(key)         | Returns true if the collection variable exists.           |
+| bru.deleteCollectionVar(key)      | Deletes a single collection variable by key.              |
+| bru.deleteAllCollectionVars()     | Deletes all collection variables.                         |
+| bru.getAllCollectionVars()         | Returns a shallow copy of all collection variables.       |
+| bru.getCollectionName()           | Retrieves the current collection name.                    |
+| bru.getFolderVar(key)             | Fetches a folder-specific variable by key.                |
+| bru.getRequestVar(key)            | Retrieves the value of a request variable.                |
+| bru.hasVar(key)                   | Checks if a variable exists.                              |
+| bru.getVar(key)                   | Retrieves the value of a variable.                        |
+| bru.setVar(key, value)            | Sets a new variable with a key-value pair.                |
+| bru.deleteVar(key)                | Deletes a specific variable.                              |
+| bru.deleteAllVars()               | Deletes all runtime variables.                            |
+| bru.getAllVars()                   | Returns a shallow copy of all runtime variables.          |
+| bru.getOauth2CredentialVar(key)   | Retrieves an OAuth2 credential variable value.            |
 
 #### Process Environment Variables
 
@@ -533,6 +586,37 @@ Here are all available variable-related methods:
 - **`getCollectionVar(key)`** - Get the collection variable.
   ```javascript
   let namespace = bru.getCollectionVar("namespace");
+  ```
+
+- **`setCollectionVar(key, value)`** - Set a collection-level variable. Collection variables are available across all requests in the collection.
+  ```javascript
+  bru.setCollectionVar("baseUrl", "https://api.staging.example.com");
+  bru.setCollectionVar("apiVersion", "v2");
+  ```
+
+- **`hasCollectionVar(key)`** - Check if a collection variable exists. Returns `true` if the variable is set.
+  ```javascript
+  if (bru.hasCollectionVar("authToken")) {
+    console.log("Auth token is available");
+  }
+  ```
+
+- **`deleteCollectionVar(key)`** - Delete a single collection variable by key.
+  ```javascript
+  bru.deleteCollectionVar("tempToken");
+  ```
+
+- **`deleteAllCollectionVars()`** - Delete all collection variables.
+  ```javascript
+  bru.deleteAllCollectionVars();
+  console.log("All collection variables cleared");
+  ```
+
+- **`getAllCollectionVars()`** - Returns a shallow copy of all collection variables.
+  ```javascript
+  const collVars = bru.getAllCollectionVars();
+  console.log("Collection variables:", collVars);
+  // Output: { baseUrl: "https://api.example.com", apiVersion: "v2", ... }
   ```
 
 - **`getCollectionName()`** - Retrieve the name of the current collection.
@@ -586,6 +670,13 @@ Runtime variables are temporary variables that exist only during the execution o
 - **`deleteAllVars()`** - Delete all runtime variables.
   ```javascript
   bru.deleteAllVars();
+  ```
+
+- **`getAllVars()`** - Returns a shallow copy of all runtime variables.
+  ```javascript
+  const allVars = bru.getAllVars();
+  console.log("All runtime variables:", allVars);
+  // Output: { petId: "123", userId: "456", ... }
   ```
 
 #### OAuth2 Credentials
